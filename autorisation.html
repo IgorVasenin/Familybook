@@ -3,51 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Форма авторизации</title>
-    <script>
-        // Функция для проверки авторизации
-        function authenticate(event) {
-            event.preventDefault(); // Предотвращаем отправку формы
-
-            var username = document.getElementById('username').value;
-            var password = document.getElementById('password').value;
-
-            // Временные данные для проверки (обычно эти данные берутся из базы данных)
-            var validUsername = 'user';
-            var validPassword = 'password';
-
-            if (username === validUsername && password === validPassword) {
-                localStorage.setItem('loggedin', true);
-                localStorage.setItem('username', username);
-                window.location.href = 'welcome.html';
-            } else {
-                document.getElementById('message').textContent = 'Неправильное имя пользователя или пароль.';
-                document.getElementById('message').style.color = 'red';
-            }
+    <title>Authorization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
         }
-
-        // Функция для проверки состояния авторизации при загрузке страницы
-        function checkAuth() {
-            if (localStorage.getItem('loggedin')) {
-                window.location.href = 'welcome.html';
-            }
+        .container {
+            width: 300px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
         }
-
-        // Проверка авторизации при загрузке страницы
-        window.onload = checkAuth;
-    </script>
+        .header {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .input-box {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .btn {
+            width: 100%;
+            padding: 10px;
+            background-color: blue;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: darkblue;
+        }
+        .message {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Форма авторизации</h1>
-    <form onsubmit="authenticate(event)">
-        <label for="username">Имя пользователя:</label>
-        <input type="text" id="username" name="username" required>
-        <br>
-        <label for="password">Пароль:</label>
-        <input type="password" id="password" name="password" required>
-        <br>
-        <button type="submit">Войти</button>
-    </form>
-    <p id="message"></p>
+    <div class="container">
+        <div class="header">Familybook Authorization</div>
+        <input type="text" id="username" class="input-box" placeholder="Username">
+        <input type="password" id="password" class="input-box" placeholder="Password">
+        <button class="btn" id="auth-btn">Login / Register</button>
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        // Mock data for existing users
+        let users = [
+            { username: 'user1', password: 'pass1' },
+            { username: 'user2', password: 'pass2' }
+        ];
+
+        document.getElementById('auth-btn').addEventListener('click', () => {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const messageDiv = document.getElementById('message');
+
+            if (!username || !password) {
+                messageDiv.textContent = 'Please enter both username and password.';
+                return;
+            }
+
+            const user = users.find(u => u.username === username);
+
+            if (user) {
+                if (user.password === password) {
+                    messageDiv.textContent = 'Login successful!';
+                    messageDiv.style.color = 'green';
+                    // Redirect to welcome page
+                    window.location.href = 'welcome.html';
+                } else {
+                    messageDiv.textContent = 'Incorrect password.';
+                }
+            } else {
+                // Register new user
+                users.push({ username, password });
+                messageDiv.textContent = 'Registration successful!';
+                messageDiv.style.color = 'green';
+                // Redirect to welcome page
+                window.location.href = 'welcome.html';
+            }
+        });
+    </script>
 </body>
 </html>
+
