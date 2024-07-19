@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Форма авторизации</title>
     <script>
+        // Функция для проверки авторизации
         function authenticate(event) {
             event.preventDefault(); // Предотвращаем отправку формы
 
@@ -16,17 +17,24 @@
             var validPassword = 'password';
 
             if (username === validUsername && password === validPassword) {
-                document.getElementById('message').textContent = 'Вы успешно авторизовались!';
-                document.getElementById('message').style.color = 'green';
-                // Перенаправление на другую страницу через 2 секунды
-                setTimeout(function() {
-                    window.location.href = 'welcome.html';
-                }, 2000);
+                localStorage.setItem('loggedin', true);
+                localStorage.setItem('username', username);
+                window.location.href = 'welcome.html';
             } else {
                 document.getElementById('message').textContent = 'Неправильное имя пользователя или пароль.';
                 document.getElementById('message').style.color = 'red';
             }
         }
+
+        // Функция для проверки состояния авторизации при загрузке страницы
+        function checkAuth() {
+            if (localStorage.getItem('loggedin')) {
+                window.location.href = 'welcome.html';
+            }
+        }
+
+        // Проверка авторизации при загрузке страницы
+        window.onload = checkAuth;
     </script>
 </head>
 <body>
