@@ -4,10 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Button to Next Page</title>
+    <script>
+        function goToNextPage() {
+            window.location.href = 'autorisation.html'; 
+        }
+    </script>
 </head>
 <body>
-    <form action="nextpage.php" method="post">
-        <button type="submit">Go to Next Page</button>
-    </form>
+    <button onclick="goToNextPage()">Go to autorisation</button>
 </body>
 </html>
+
