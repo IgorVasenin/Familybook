@@ -57,7 +57,7 @@
 
     <script>
         // Mock data for existing users
-        let users = [
+        let users = JSON.parse(localStorage.getItem('users')) || [
             { username: 'user1', password: 'pass1' },
             { username: 'user2', password: 'pass2' }
         ];
@@ -78,17 +78,19 @@
                 if (user.password === password) {
                     messageDiv.textContent = 'Login successful!';
                     messageDiv.style.color = 'green';
-                    // Redirect to welcome page
+                    localStorage.setItem('loggedInUser', JSON.stringify(user));
                     window.location.href = 'welcome.html';
                 } else {
                     messageDiv.textContent = 'Incorrect password.';
                 }
             } else {
                 // Register new user
-                users.push({ username, password });
+                const newUser = { username, password };
+                users.push(newUser);
+                localStorage.setItem('users', JSON.stringify(users));
+                localStorage.setItem('loggedInUser', JSON.stringify(newUser));
                 messageDiv.textContent = 'Registration successful!';
                 messageDiv.style.color = 'green';
-                // Redirect to welcome page
                 window.location.href = 'welcome.html';
             }
         });
