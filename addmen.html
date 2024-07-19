@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add User</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .header {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .input-box {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid blue;
+            margin-bottom: 10px;
+        }
+        .nav-link {
+            color: blue;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .nav-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span class="nav-link" onclick="window.location.href='family.html'">← Back to Family</span>
+        Add User
+    </div>
+    <div>
+        <div>Name to add user</div>
+        <input type="text" id="new-user-name" class="input-box" placeholder="Enter user name">
+        <button id="add-user-btn">Add</button>
+    </div>
+    <script>
+        // Mock data for family members
+        let familyMembers = ['Member A', 'Member B'];
+
+        // Add user
+        document.getElementById('add-user-btn').addEventListener('click', () => {
+            const userName = document.getElementById('new-user-name').value;
+            if (userName) {
+                familyMembers.push(userName);
+                alert(`User ${userName} added to family.`);
+                document.getElementById('new-user-name').value = '';
+            }
+        });
+    </script>
+</body>
+</html>
