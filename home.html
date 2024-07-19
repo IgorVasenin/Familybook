@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Familybook</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #container {
+            display: flex;
+        }
+        #left-col, #right-col {
+            width: 20%;
+            padding: 10px;
+        }
+        #center-col {
+            width: 60%;
+            padding: 10px;
+        }
+        .header {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .input-box {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid blue;
+            margin-bottom: 10px;
+        }
+        .post {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .nav-link {
+            color: blue;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .nav-link:hover {
+            text-decoration: underline;
+        }
+        #publish-btn {
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">Familybook</div>
+    <div id="container">
+        <div id="left-col">
+            <div>We subscriptions:</div>
+            <div id="subscriptions"></div>
+        </div>
+        <div id="center-col">
+            <div>
+                <div>Publish news in my family</div>
+                <input type="text" id="family-news" class="input-box" placeholder="Write something..." onpaste="handlePaste(event)">
+                <button id="publish-btn">Publish</button>
+            </div>
+            <div>News to all families in this:</div>
+            <div id="news-feed"></div>
+        </div>
+        <div id="right-col">
+            <div><a href="family.html" class="nav-link">My family</a></div>
+        </div>
+    </div>
+    <script>
+        // Mock data for subscriptions and news
+        const subscriptions = ['Family A', 'Family B', 'Family C'];
+        const news = [
+            { family: 'Family A', content: 'News from Family A' },
+            { family: 'Family B', content: 'News from Family B' }
+        ];
+
+        // Load subscriptions
+        const subscriptionsContainer = document.getElementById('subscriptions');
+        subscriptions.forEach(sub => {
+            const div = document.createElement('div');
+            div.textContent = sub;
+            subscriptionsContainer.appendChild(div);
+        });
+
+        // Load news
+        const newsFeed = document.getElementById('news-feed');
+        news.forEach(post => {
+            const div = document.createElement('div');
+            div.className = 'post';
+            div.textContent = `${post.family}: ${post.content}`;
+            newsFeed.appendChild(div);
+        });
+
+        // Publish news
+        document.getElementById('publish-btn').addEventListener('click', () => {
+            const content = document.getElementById('family-news').value;
+            if (content) {
+                const div = document.createElement('div');
+                div.className = 'post';
+                div.textContent = `My Family: ${content}`;
+                newsFeed.appendChild(div);
+                document.getElementById('family-news').value = '';
+            }
+        });
+
+        // Handle paste event
+        function handlePaste(event) {
+            const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].kind === 'file') {
+                    const file = items[i].getAsFile();
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const img = document.createElement('img');
+                        img.src = event.target.result;
+                        img.style.maxWidth = '100%';
+                        newsFeed.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
