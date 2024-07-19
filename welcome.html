@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome Page</title>
+    <script>
+        // Функция для проверки состояния авторизации
+        function checkAuth() {
+            if (!localStorage.getItem('loggedin')) {
+                window.location.href = 'index.html';
+            } else {
+                document.getElementById('welcome-message').textContent = 'Добро пожаловать, ' + localStorage.getItem('username') + '!';
+            }
+        }
+
+        // Функция для выхода из аккаунта
+        function logout() {
+            localStorage.removeItem('loggedin');
+            localStorage.removeItem('username');
+            window.location.href = 'index.html';
+        }
+
+        // Проверка авторизации при загрузке страницы
+        window.onload = checkAuth;
+    </script>
+</head>
+<body>
+    <h1 id="welcome-message">Welcome!</h1>
+    <button onclick="window.location.href='home.html'">Finish</button>
+    <button onclick="logout()">Выйти</button>
+</body>
+</html>
