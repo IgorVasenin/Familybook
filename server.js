@@ -39,6 +39,28 @@ app.post('/news', (req, res) => {
     });
 });
 
+// Endpoint to delete news by family
+app.delete('/news/:family', (req, res) => {
+    const familyToDelete = req.params.family;
+
+    fs.readFile('news.json', (err, data) => {
+        if (err) {
+            res.status(500).send('Error reading news file');
+        } else {
+            let newsFeed = JSON.parse(data);
+            newsFeed = newsFeed.filter(news => news.family !== familyToDelete);
+
+            fs.writeFile('news.json', JSON.stringify(newsFeed), err => {
+                if (err) {
+                    res.status(500).send('Error writing news file');
+                } else {
+                    res.send('Family news deleted');
+                }
+            });
+        }
+    });
+});
+
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
