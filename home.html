@@ -9,8 +9,6 @@
             color: #004d40;
             margin: 0;
             padding: 0;
-        }
-        .container {
             display: flex;
             flex-direction: column;
             height: 100vh;
@@ -21,35 +19,42 @@
             padding: 10px;
             text-align: center;
         }
-        .main-content {
+        .content {
             display: flex;
             flex: 1;
             padding: 20px;
         }
-        .subscriptions, .news {
-            flex: 1;
+        .sidebar {
+            width: 20%;
             padding: 20px;
-            margin: 10px;
-            background-color: #ffffff;
+            background-color: #b2dfdb;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        .subscriptions {
-            max-width: 20%;
-        }
-        .news {
-            max-width: 60%;
-        }
-        .sidebar {
-            text-align: right;
+        .main {
+            flex: 1;
             padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-left: 20px;
         }
-        .sidebar a {
-            color: #00796b;
+        .sidebar h3, .main h3 {
+            margin-top: 0;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+        .sidebar ul li {
+            margin: 10px 0;
+        }
+        .sidebar ul li a {
             text-decoration: none;
+            color: #004d40;
             font-weight: bold;
         }
-        .sidebar a:hover {
+        .sidebar ul li a:hover {
             text-decoration: underline;
         }
         textarea, button {
@@ -70,25 +75,21 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Familybook</h1>
+    <div class="header">
+        <h1>Familybook</h1>
+    </div>
+    <div class="content">
+        <div class="sidebar">
+            <h3>We subscriptions:</h3>
+            <ul id="subscriptionsList"></ul>
         </div>
-        <div class="main-content">
-            <div class="subscriptions">
-                <h3>We subscriptions:</h3>
-                <div id="subscriptions">
-                    <!-- Список подписок будет отображаться здесь -->
-                </div>
-            </div>
-            <div class="news">
-                <h3>Publish news in my family:</h3>
-                <textarea id="newsInput" placeholder="Write something..."></textarea>
-                <button onclick="publishNews()">Publish</button>
-                <h3>News to all families in this:</h3>
-                <div id="newsFeed"></div>
-            </div>
-            <div class="sidebar">
+        <div class="main">
+            <h3>Publish news in my family:</h3>
+            <textarea id="newsInput" placeholder="Write something..."></textarea>
+            <button onclick="publishNews()">Publish</button>
+            <h3>News to all families in this:</h3>
+            <div id="newsFeed"></div>
+            <div style="text-align: right;">
                 <a href="family.html">My family</a>
             </div>
         </div>
@@ -99,32 +100,18 @@
             return localStorage.getItem('family') || 'MyFamily';
         }
 
-        function getSubscriptions() {
-            return JSON.parse(localStorage.getItem('subscriptions')) || [];
-        }
-
-        function saveSubscriptions(subscriptions) {
-            localStorage.setItem('subscriptions', JSON.stringify(subscriptions));
-        }
-
-        function displaySubscriptions() {
-            const subscriptionsDiv = document.getElementById('subscriptions');
-            subscriptionsDiv.innerHTML = '';
-            const subscriptions = getSubscriptions();
-            subscriptions.forEach(family => {
-                const familyElement = document.createElement('p');
-                familyElement.textContent = family;
-                subscriptionsDiv.appendChild(familyElement);
-            });
+        function getFamilySurname() {
+            return localStorage.getItem('familySurname') || 'My Family';
         }
 
         function publishNews() {
             const newsInput = document.getElementById('newsInput');
             const news = newsInput.value;
             const family = getFamily();
+            const familySurname = getFamilySurname();
 
             const newsFeed = JSON.parse(localStorage.getItem('newsFeed')) || [];
-            newsFeed.push({ family, text: news });
+            newsFeed.push({ family, familySurname, text: news });
             localStorage.setItem('newsFeed', JSON.stringify(newsFeed));
 
             newsInput.value = '';
@@ -138,16 +125,29 @@
 
             newsFeed.forEach(news => {
                 const newsItem = document.createElement('div');
-                newsItem.textContent = `${news.family}: ${news.text}`;
+                newsItem.textContent = `${news.familySurname}: ${news.text}`;
                 newsFeedDiv.appendChild(newsItem);
             });
         }
 
+        function displaySubscriptions() {
+            const subscriptionsList = document.getElementById('subscriptionsList');
+            subscriptionsList.innerHTML = '';
+            const subscriptions = JSON.parse(localStorage.getItem('subscriptions')) || [];
+
+            subscriptions.forEach(subscription => {
+                const listItem = document.createElement('li');
+                listItem.textContent = subscription;
+                subscriptionsList.appendChild(listItem);
+            });
+        }
+
         window.onload = function() {
-            displaySubscriptions();
             displayNews();
+            displaySubscriptions();
         }
     </script>
 </body>
 </html>
+
 
