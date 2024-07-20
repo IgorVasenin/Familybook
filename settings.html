@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Settings</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e0f7fa;
+            color: #004d40;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+        }
+        .header {
+            background-color: #00796b;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            width: 100%;
+        }
+        .main-content {
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+        input, button {
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #004d40;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #00796b;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #004d40;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Settings</h1>
+        </div>
+        <div class="main-content">
+            <h3>Family Surname:</h3>
+            <input type="text" id="familySurnameInput" placeholder="Enter family surname">
+            <button onclick="saveSettings()">Save</button>
+        </div>
+    </div>
+
+    <script>
+        function saveSettings() {
+            const familySurnameInput = document.getElementById('familySurnameInput');
+            const familySurname = familySurnameInput.value;
+
+            localStorage.setItem('familySurname', familySurname);
+            alert('Settings saved!');
+        }
+
+        window.onload = function() {
+            const familySurname = localStorage.getItem('familySurname') || '';
+            document.getElementById('familySurnameInput').value = familySurname;
+        }
+    </script>
+</body>
+</html>
