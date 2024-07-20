@@ -2,26 +2,96 @@
 <html>
 <head>
     <title>Familybook</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e0f7fa;
+            color: #004d40;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .header {
+            background-color: #00796b;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+        .main-content {
+            display: flex;
+            flex: 1;
+            padding: 20px;
+        }
+        .subscriptions, .news {
+            flex: 1;
+            padding: 20px;
+            margin: 10px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .subscriptions {
+            max-width: 20%;
+        }
+        .news {
+            max-width: 60%;
+        }
+        .sidebar {
+            text-align: right;
+            padding: 20px;
+        }
+        .sidebar a {
+            color: #00796b;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .sidebar a:hover {
+            text-decoration: underline;
+        }
+        textarea, button {
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #004d40;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #00796b;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #004d40;
+        }
+    </style>
 </head>
 <body>
-    <h1>Familybook</h1>
-    <div>
-        <div>
-            <h3>We subscriptions:</h3>
-            <div id="subscriptions">
-                <!-- Список подписок будет отображаться здесь -->
+    <div class="container">
+        <div class="header">
+            <h1>Familybook</h1>
+        </div>
+        <div class="main-content">
+            <div class="subscriptions">
+                <h3>We subscriptions:</h3>
+                <div id="subscriptions">
+                    <!-- Список подписок будет отображаться здесь -->
+                </div>
+            </div>
+            <div class="news">
+                <h3>Publish news in my family:</h3>
+                <textarea id="newsInput" placeholder="Write something..."></textarea>
+                <button onclick="publishNews()">Publish</button>
+                <h3>News to all families in this:</h3>
+                <div id="newsFeed"></div>
+            </div>
+            <div class="sidebar">
+                <a href="family.html">My family</a>
             </div>
         </div>
-        <div>
-            <h3>Publish news in my family:</h3>
-            <textarea id="newsInput" placeholder="Write something..."></textarea>
-            <button onclick="publishNews()">Publish</button>
-        </div>
-        <div>
-            <h3>News to all families in this:</h3>
-            <div id="newsFeed"></div>
-        </div>
-        <a href="family.html">My family</a>
     </div>
 
     <script>
