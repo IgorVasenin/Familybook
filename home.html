@@ -104,26 +104,38 @@
             return localStorage.getItem('familySurname') || 'My Family';
         }
 
-        function publishNews() {
+        async function fetchNews() {
+            const response = await fetch('/news');
+            const newsFeed = await response.json();
+            return newsFeed;
+        }
+
+        async function publishNews() {
             const newsInput = document.getElementById('newsInput');
             const news = newsInput.value;
             const family = getFamily();
             const familySurname = getFamilySurname();
 
-            const newsFeed = JSON.parse(localStorage.getItem('newsFeed')) || [];
-            newsFeed.push({ family, familySurname, text: news });
-            localStorage.setItem('newsFeed', JSON.stringify(newsFeed));
+            const newNews = { family, familySurname, text: news };
+
+            await fetch('/news', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(newNews)
+            });
 
             newsInput.value = '';
             displayNews();
         }
 
-        function displayNews() {
+        async function displayNews() {
             const newsFeedDiv = document.getElementById('newsFeed');
             newsFeedDiv.innerHTML = '';
-            const newsFeed = JSON.parse(localStorage.getItem('newsFeed')) || [];
+            const newsFeed = await fetchNews();
 
-            newsFeed.forEach(news => {
+            newsFeed.slice().reverse().forEach(news => {
                 const newsItem = document.createElement('div');
                 newsItem.textContent = `${news.familySurname}: ${news.text}`;
                 newsFeedDiv.appendChild(newsItem);
@@ -149,5 +161,3 @@
     </script>
 </body>
 </html>
-
-
