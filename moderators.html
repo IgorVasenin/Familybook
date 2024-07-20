@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Moderators</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e0f7fa;
+            color: #004d40;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+        }
+        .header {
+            background-color: #00796b;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            width: 100%;
+        }
+        .content {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        .family-list {
+            width: 80%;
+            max-width: 600px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        .family-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .family-item:last-child {
+            border-bottom: none;
+        }
+        .family-name {
+            font-size: 1.2em;
+        }
+        .delete-button {
+            background-color: #e57373;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .delete-button:hover {
+            background-color: #d32f2f;
+        }
+        .password-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .password-input {
+            padding: 10px;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        .password-button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: #00796b;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .password-button:hover {
+            background-color: #004d40;
+        }
+    </style>
+</head>
+<body>
+    <div class="header" id="header">
+        <h1>Moderators</h1>
+    </div>
+    <div class="content" id="content">
+        <form class="password-form" id="passwordForm">
+            <input type="password" id="passwordInput" class="password-input" placeholder="Enter password" />
+            <button type="button" class="password-button" onclick="checkPassword()">Submit</button>
+        </form>
+        <div class="family-list" id="familyList" style="display:none;"></div>
+    </div>
+
+    <script>
+        const correctPassword = '4268';
+
+        function checkPassword() {
+            const passwordInput = document.getElementById('passwordInput').value;
+            if (passwordInput === correctPassword) {
+                document.getElementById('passwordForm').style.display = 'none';
+                document.getElementById('familyList').style.display = 'block';
+                displayFamilies();
+            } else {
+                alert('Incorrect password. Please try again.');
+            }
+        }
+
+        async function fetchNews() {
+            const response = await fetch('/news');
+            const newsFeed = await response.json();
+            return newsFeed;
+        }
+
+        async function deleteFamily(family) {
+            await fetch(`/news/${family}`, {
+                method: 'DELETE'
+            });
+            displayFamilies();
+        }
+
+        async function displayFamilies() {
+            const familyList = document.getElementById('familyList');
+            familyList.innerHTML = '';
+            const newsFeed = await fetchNews();
+            const families = [...new Set(newsFeed.map(news => news.family))];
+
+            families.forEach(family => {
+                const familyItem = document.createElement('div');
+                familyItem.className = 'family-item';
+
+                const familyName = document.createElement('div');
+                familyName.className = 'family-name';
+                familyName.textContent = family;
+
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'delete-button';
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = () => deleteFamily(family);
+
+                familyItem.appendChild(familyName);
+                familyItem.appendChild(deleteButton);
+                familyList.appendChild(familyItem);
+            });
+        }
+
+        window.onload = function() {
+            // displayFamilies() is called after password is verified
+        }
+    </script>
+</body>
+</html>
