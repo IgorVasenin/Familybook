@@ -72,6 +72,7 @@
         </div>
         <div class="sidebar">
             <a href="home.html">&larr; In home</a>
+            <a href="settings.html">Settings</a>
         </div>
         <div class="main-content">
             <div class="news">
@@ -90,13 +91,18 @@
             return localStorage.getItem('family') || 'MyFamily';
         }
 
+        function getFamilySurname() {
+            return localStorage.getItem('familySurname') || 'My Family';
+        }
+
         function publishNews() {
             const newsInput = document.getElementById('newsInput');
             const news = newsInput.value;
             const family = getFamily();
+            const familySurname = getFamilySurname();
 
             const newsFeed = JSON.parse(localStorage.getItem('newsFeed')) || [];
-            newsFeed.push({ family, text: news });
+            newsFeed.push({ family, familySurname, text: news });
             localStorage.setItem('newsFeed', JSON.stringify(newsFeed));
 
             newsInput.value = '';
@@ -112,7 +118,7 @@
             newsFeed.forEach(news => {
                 if (news.family === family) {
                     const newsItem = document.createElement('div');
-                    newsItem.textContent = news.text;
+                    newsItem.textContent = `${news.familySurname}: ${news.text}`;
                     familyNewsFeed.appendChild(newsItem);
                 }
             });
@@ -124,4 +130,5 @@
     </script>
 </body>
 </html>
+
 
