@@ -1,66 +1,55 @@
 const express = require('express');
+const bodyParser = require('body-parser');
+const multer = require('multer');
 const fs = require('fs');
+const path = require('path');
+
 const app = express();
 const port = 3000;
 
-app.use(express.json());
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'public/uploads/');
+    },
+    filename: (req, file, cb) => {
+        cb(null, `${Date.now()}-${file.originalname}`);
+    }
+});
+
+const upload = multer({ storage: storage });
+
+let newsFeed = [];
+let settings = { familySurname: 'My family', subscriptions: [] };
+
+app.use(bodyParser.json());
 app.use(express.static('public'));
 
-// Endpoint to get news
 app.get('/news', (req, res) => {
-    fs.readFile('news.json', (err, data) => {
-        if (err) {
-            res.status(500).send('Error reading news file');
-        } else {
-            res.send(data);
-        }
-    });
+    res.json(newsFeed);
 });
 
-// Endpoint to post news
-app.post('/news', (req, res) => {
-    const newNews = req.body;
+app.post('/news', upload.array('media'), (req, res) => {
+    const post = {
+        text: req.body.text,
+        family: req.body.family,
+        timestamp: new Date(),
+        media: req.files.map(file => `/uploads/${file.filename}`)
+    };
 
-    fs.readFile('news.json', (err, data) => {
-        if (err) {
-            res.status(500).send('Error reading news file');
-        } else {
-            const newsFeed = JSON.parse(data);
-            newsFeed.push(newNews);
-
-            fs.writeFile('news.json', JSON.stringify(newsFeed), err => {
-                if (err) {
-                    res.status(500).send('Error writing news file');
-                } else {
-                    res.send('News added');
-                }
-            });
-        }
-    });
+    newsFeed.push(post);
+    res.status(200).send('Post added');
 });
 
-// Endpoint to delete news by family
-app.delete('/news/:family', (req, res) => {
-    const familyToDelete = req.params.family;
+app.get('/settings', (req, res) => {
+    res.json(settings);
+});
 
-    fs.readFile('news.json', (err, data) => {
-        if (err) {
-            res.status(500).send('Error reading news file');
-        } else {
-            let newsFeed = JSON.parse(data);
-            newsFeed = newsFeed.filter(news => news.family !== familyToDelete);
-
-            fs.writeFile('news.json', JSON.stringify(newsFeed), err => {
-                if (err) {
-                    res.status(500).send('Error writing news file');
-                } else {
-                    res.send('Family news deleted');
-                }
-            });
-        }
-    });
+app.post('/settings', (req, res) => {
+    settings = { ...settings, ...req.body };
+    res.status(200).send('Settings updated');
 });
 
 app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
+    console.log(`Server running at http://localhost:${port}/`);
 });
+
