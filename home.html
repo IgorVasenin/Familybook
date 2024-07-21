@@ -1,76 +1,85 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Familybook</title>
+    <meta charset="UTF-8">
+    <title>Familybook Home</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #e0f7fa;
             color: #004d40;
             margin: 0;
-            padding: 0;
             display: flex;
             flex-direction: column;
+            align-items: center;
             height: 100vh;
         }
         .header {
             background-color: #00796b;
             color: white;
             padding: 10px;
+            width: 100%;
             text-align: center;
         }
-        .content {
+        .main-content {
+            flex: 1;
             display: flex;
-            flex: 1;
-            padding: 20px;
-        }
-        .sidebar {
-            width: 20%;
-            padding: 20px;
-            background-color: #b2dfdb;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        .main {
-            flex: 1;
-            padding: 20px;
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            margin-left: 20px;
-        }
-        .sidebar h3, .main h3 {
-            margin-top: 0;
-        }
-        .sidebar ul {
-            list-style: none;
-            padding: 0;
-        }
-        .sidebar ul li {
-            margin: 10px 0;
-        }
-        .sidebar ul li a {
-            text-decoration: none;
-            color: #004d40;
-            font-weight: bold;
-        }
-        .sidebar ul li a:hover {
-            text-decoration: underline;
-        }
-        textarea, button {
             width: 100%;
-            margin-top: 10px;
-            padding: 10px;
-            border: 1px solid #004d40;
-            border-radius: 5px;
+            max-width: 1200px;
+            padding: 20px;
+            box-sizing: border-box;
         }
-        button {
+        .subscriptions {
+            flex: 1;
+            margin-right: 20px;
+        }
+        .news {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .publish {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .publish textarea, .publish input[type="file"] {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .publish button {
+            padding: 10px;
             background-color: #00796b;
             color: white;
+            border: none;
             cursor: pointer;
         }
-        button:hover {
+        .publish button:hover {
             background-color: #004d40;
+        }
+        .post {
+            width: 100%;
+            max-width: 600px;
+            background-color: white;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .post img {
+            max-width: 100%;
+            height: auto;
+        }
+        .my-family {
+            flex: 1;
+            margin-left: 20px;
+        }
+        .my-family a {
+            color: #00796b;
+            text-decoration: none;
+        }
+        .my-family a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -78,86 +87,107 @@
     <div class="header">
         <h1>Familybook</h1>
     </div>
-    <div class="content">
-        <div class="sidebar">
-            <h3>We subscriptions:</h3>
-            <ul id="subscriptionsList"></ul>
+    <div class="main-content">
+        <div class="subscriptions">
+            <h2>We subscriptions</h2>
+            <ul id="subscriptionList"></ul>
         </div>
-        <div class="main">
-            <h3>Publish news in my family:</h3>
-            <textarea id="newsInput" placeholder="Write something..."></textarea>
-            <button onclick="publishNews()">Publish</button>
-            <h3>News to all families in this:</h3>
-            <div id="newsFeed"></div>
-            <div style="text-align: right;">
-                <a href="family.html">My family</a>
+        <div class="news">
+            <div class="publish">
+                <textarea id="postText" rows="4" placeholder="Write something..."></textarea>
+                <input type="file" id="postMedia" multiple />
+                <button onclick="publishPost()">Publish</button>
             </div>
+            <div id="newsFeed"></div>
+        </div>
+        <div class="my-family">
+            <a href="family.html">My family</a>
         </div>
     </div>
 
     <script>
-        function getFamily() {
-            return localStorage.getItem('family') || 'MyFamily';
-        }
-
-        function getFamilySurname() {
-            return localStorage.getItem('familySurname') || 'My Family';
+        async function fetchSettings() {
+            const response = await fetch('/settings');
+            return await response.json();
         }
 
         async function fetchNews() {
             const response = await fetch('/news');
-            const newsFeed = await response.json();
-            return newsFeed;
+            return await response.json();
         }
 
-        async function publishNews() {
-            const newsInput = document.getElementById('newsInput');
-            const news = newsInput.value;
-            const family = getFamily();
-            const familySurname = getFamilySurname();
+        async function publishPost() {
+            const postText = document.getElementById('postText').value;
+            const postMedia = document.getElementById('postMedia').files;
 
-            const newNews = { family, familySurname, text: news };
+            const formData = new FormData();
+            formData.append('text', postText);
+            for (let i = 0; i < postMedia.length; i++) {
+                formData.append('media', postMedia[i]);
+            }
+
+            const settings = await fetchSettings();
+            formData.append('family', settings.familySurname);
 
             await fetch('/news', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(newNews)
+                body: formData
             });
 
-            newsInput.value = '';
-            displayNews();
+            loadNews();
         }
 
-        async function displayNews() {
+        async function loadNews() {
+            const newsFeed = await fetchNews();
             const newsFeedDiv = document.getElementById('newsFeed');
             newsFeedDiv.innerHTML = '';
-            const newsFeed = await fetchNews();
 
-            newsFeed.slice().reverse().forEach(news => {
-                const newsItem = document.createElement('div');
-                newsItem.textContent = `${news.familySurname}: ${news.text}`;
-                newsFeedDiv.appendChild(newsItem);
+            newsFeed.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            newsFeed.forEach(post => {
+                const postDiv = document.createElement('div');
+                postDiv.className = 'post';
+
+                const postFamily = document.createElement('div');
+                postFamily.textContent = `Family: ${post.family}`;
+
+                const postText = document.createElement('div');
+                postText.textContent = post.text;
+
+                postDiv.appendChild(postFamily);
+                postDiv.appendChild(postText);
+
+                if (post.media && post.media.length > 0) {
+                    post.media.forEach(mediaUrl => {
+                        const mediaElement = document.createElement('img');
+                        mediaElement.src = mediaUrl;
+                        postDiv.appendChild(mediaElement);
+                    });
+                }
+
+                newsFeedDiv.appendChild(postDiv);
             });
         }
 
-        function displaySubscriptions() {
-            const subscriptionsList = document.getElementById('subscriptionsList');
-            subscriptionsList.innerHTML = '';
-            const subscriptions = JSON.parse(localStorage.getItem('subscriptions')) || [];
+        async function loadSubscriptions() {
+            const settings = await fetchSettings();
+            const subscriptionList = document.getElementById('subscriptionList');
+            subscriptionList.innerHTML = '';
 
-            subscriptions.forEach(subscription => {
-                const listItem = document.createElement('li');
-                listItem.textContent = subscription;
-                subscriptionsList.appendChild(listItem);
-            });
+            if (settings.subscriptions) {
+                settings.subscriptions.forEach(subscription => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = subscription;
+                    subscriptionList.appendChild(listItem);
+                });
+            }
         }
 
         window.onload = function() {
-            displayNews();
-            displaySubscriptions();
+            loadNews();
+            loadSubscriptions();
         }
     </script>
 </body>
 </html>
+
