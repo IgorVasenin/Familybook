@@ -4,95 +4,7 @@
     <meta charset="UTF-8">
     <title>Familybook Home</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #e0f7fa;
-            color: #004d40;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
-        }
-        .header {
-            background-color: #00796b;
-            color: white;
-            padding: 10px;
-            width: 100%;
-            text-align: center;
-        }
-        .main-content {
-            flex: 1;
-            display: flex;
-            width: 100%;
-            max-width: 1200px;
-            padding: 20px;
-            box-sizing: border-box;
-            flex-direction: column;
-        }
-        .subscriptions {
-            flex: 1;
-            margin-right: 20px;
-        }
-        .news {
-            flex: 2;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .publish {
-            width: 100%;
-            margin-bottom: 20px;
-        }
-        .publish textarea, .publish input[type="file"] {
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        .publish button {
-            padding: 10px;
-            background-color: #00796b;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        .publish button:hover {
-            background-color: #004d40;
-        }
-        .post {
-            width: 100%;
-            max-width: 600px;
-            background-color: white;
-            margin-bottom: 20px;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        .post img {
-            max-width: 100%;
-            height: auto;
-        }
-        .my-family {
-            flex: 1;
-            margin-left: 20px;
-        }
-        .my-family a {
-            color: #00796b;
-            text-decoration: none;
-        }
-        .my-family a:hover {
-            text-decoration: underline;
-        }
-        .export-button {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #00796b;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        .export-button:hover {
-            background-color: #004d40;
-        }
+        /* ваш CSS код */
     </style>
 </head>
 <body>
@@ -118,7 +30,11 @@
     </div>
 
     <script>
-        function publishPost() {
+        const GITHUB_TOKEN = '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';
+        const REPO_OWNER = 'Igor Vasenin';
+        const REPO_NAME = 'Familybook';
+
+        async function publishPost() {
             const postText = document.getElementById('postText').value;
             const postMedia = document.getElementById('postMedia').files;
 
@@ -127,85 +43,126 @@
                 return;
             }
 
-            let formData = new FormData();
-            formData.append('text', postText);
+            let mediaUrls = [];
 
             for (let i = 0; i < postMedia.length; i++) {
-                formData.append('media[]', postMedia[i]);
+                const file = postMedia[i];
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function () {
+                    mediaUrls.push(reader.result);
+                    if (mediaUrls.length === postMedia.length) {
+                        savePostToGitHub(postText, mediaUrls);
+                    }
+                };
             }
 
-            fetch('save_post.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('postText').value = '';
-                    document.getElementById('postMedia').value = '';
-                    loadNews();
-                } else {
-                    alert('Error saving post.');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
+            if (postMedia.length === 0) {
+                savePostToGitHub(postText, mediaUrls);
+            }
         }
 
-        function loadNews() {
-            fetch('load_posts.php')
-                .then(response => response.json())
-                .then(posts => {
-                    const newsFeedDiv = document.getElementById('newsFeed');
-                    newsFeedDiv.innerHTML = '';
+        async function savePostToGitHub(text, mediaUrls) {
+            const post = {
+                text: text,
+                family: 'My family',
+                timestamp: Date.now(),
+                media: mediaUrls
+            };
 
-                    posts.forEach(post => {
-                        const postDiv = document.createElement('div');
-                        postDiv.className = 'post';
+            let posts = await loadPostsFromGitHub();
+            posts.push(post);
 
-                        const postFamily = document.createElement('div');
-                        postFamily.textContent = `Family: ${post.family}`;
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify(posts, null, 2))));
+            const sha = await getFileSha('posts.json');
 
-                        const postText = document.createElement('div');
-                        postText.textContent = post.text;
-
-                        postDiv.appendChild(postFamily);
-                        postDiv.appendChild(postText);
-
-                        if (post.media && post.media.length > 0) {
-                            post.media.forEach(mediaUrl => {
-                                const mediaElement = document.createElement('img');
-                                mediaElement.src = mediaUrl;
-                                postDiv.appendChild(mediaElement);
-                            });
-                        }
-
-                        newsFeedDiv.appendChild(postDiv);
-                    });
+            const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/posts.json`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${GITHUB_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: 'New post',
+                    content: content,
+                    sha: sha
                 })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
+            });
+
+            if (response.ok) {
+                document.getElementById('postText').value = '';
+                document.getElementById('postMedia').value = '';
+                loadNews();
+            } else {
+                console.error('Error saving post to GitHub:', await response.json());
+            }
         }
 
-        function loadSubscriptions() {
-            const subscriptions = JSON.parse(localStorage.getItem('subscriptions')) || [];
-            const subscriptionList = document.getElementById('subscriptionList');
-            subscriptionList.innerHTML = '';
+        async function loadPostsFromGitHub() {
+            const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/posts.json`, {
+                headers: {
+                    'Authorization': `token ${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}`
+                }
+            });
 
-            subscriptions.forEach(subscription => {
-                const listItem = document.createElement('li');
-                listItem.textContent = subscription;
-                subscriptionList.appendChild(listItem);
+            if (response.ok) {
+                const file = await response.json();
+                const content = atob(file.content);
+                return JSON.parse(content);
+            } else {
+                return [];
+            }
+        }
+
+        async function getFileSha(path) {
+            const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${path}`, {
+                headers: {
+                    'Authorization': `token ${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}`
+                }
+            });
+
+            if (response.ok) {
+                const file = await response.json();
+                return file.sha;
+            } else {
+                return null;
+            }
+        }
+
+        async function loadNews() {
+            const newsFeedDiv = document.getElementById('newsFeed');
+            newsFeedDiv.innerHTML = '';
+
+            const posts = await loadPostsFromGitHub();
+
+            posts.forEach(post => {
+                const postDiv = document.createElement('div');
+                postDiv.className = 'post';
+
+                const postFamily = document.createElement('div');
+                postFamily.textContent = `Family: ${post.family}`;
+
+                const postText = document.createElement('div');
+                postText.textContent = post.text;
+
+                postDiv.appendChild(postFamily);
+                postDiv.appendChild(postText);
+
+                if (post.media && post.media.length > 0) {
+                    post.media.forEach(mediaUrl => {
+                        const mediaElement = document.createElement('img');
+                        mediaElement.src = mediaUrl;
+                        postDiv.appendChild(mediaElement);
+                    });
+                }
+
+                newsFeedDiv.appendChild(postDiv);
             });
         }
 
         window.onload = function () {
             loadNews();
-            loadSubscriptions();
         }
     </script>
 </body>
 </html>
-
