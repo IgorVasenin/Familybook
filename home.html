@@ -105,89 +105,131 @@
         </div>
     </div>
 
-    <script>
-        async function fetchSettings() {
-            const response = await fetch('/settings');
-            return await response.json();
-        }
+    <!-- Firebase SDK -->
+    <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
 
-        async function fetchNews() {
-            const response = await fetch('/news');
-            return await response.json();
-        }
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyBVHBUHBm6VIdeHWwgMY0ID5v2Jho5vLVI",
+    authDomain: "hranenie-dannyh-in-famolybook.firebaseapp.com",
+    projectId: "hranenie-dannyh-in-famolybook",
+    storageBucket: "hranenie-dannyh-in-famolybook.appspot.com",
+    messagingSenderId: "630994926475",
+    appId: "1:630994926475:web:c8e4c0f77c6996175a0d8e",
+    measurementId: "G-BGZBMGT8XC"
+  };
 
-        async function publishPost() {
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const storage = firebase.storage();
+
+        function publishPost() {
             const postText = document.getElementById('postText').value;
             const postMedia = document.getElementById('postMedia').files;
+            const familySurname = localStorage.getItem('familySurname') || 'My family';
 
-            const formData = new FormData();
-            formData.append('text', postText);
-            for (let i = 0; i < postMedia.length; i++) {
-                formData.append('media', postMedia[i]);
+            let mediaUrls = [];
+            if (postMedia.length > 0) {
+                for (let i = 0; i < postMedia.length; i++) {
+                    const file = postMedia[i];
+                    const storageRef = storage.ref('posts/' + file.name);
+                    const uploadTask = storageRef.put(file);
+
+                    uploadTask.on('state_changed', (snapshot) => {
+                        // Progress of upload can be handled here if needed
+                    }, (error) => {
+                        console.error('Error uploading file:', error);
+                    }, () => {
+                        uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                            mediaUrls.push(downloadURL);
+                            if (mediaUrls.length === postMedia.length) {
+                                savePostToDB(postText, mediaUrls, familySurname);
+                            }
+                        });
+                    });
+                }
+            } else {
+                savePostToDB(postText, mediaUrls, familySurname);
             }
-
-            const settings = await fetchSettings();
-            formData.append('family', settings.familySurname);
-
-            await fetch('/news', {
-                method: 'POST',
-                body: formData
-            });
-
-            loadNews();
         }
 
-        async function loadNews() {
-            const newsFeed = await fetchNews();
+        function savePostToDB(text, mediaUrls, family) {
+            const post = {
+                text: text,
+                family: family,
+                timestamp: Date.now(),
+                media: mediaUrls
+            };
+
+            db.ref('posts').push(post).then(() => {
+                loadNews();
+            }).catch((error) => {
+                console.error('Error saving post to database:', error);
+            });
+        }
+
+        function loadNews() {
             const newsFeedDiv = document.getElementById('newsFeed');
             newsFeedDiv.innerHTML = '';
 
-            newsFeed.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            db.ref('posts').orderByChild('timestamp').on('value', (snapshot) => {
+                newsFeedDiv.innerHTML = '';
 
-            newsFeed.forEach(post => {
-                const postDiv = document.createElement('div');
-                postDiv.className = 'post';
+                snapshot.forEach((childSnapshot) => {
+                    const post = childSnapshot.val();
+                    const postDiv = document.createElement('div');
+                    postDiv.className = 'post';
 
-                const postFamily = document.createElement('div');
-                postFamily.textContent = `Family: ${post.family}`;
+                    const postFamily = document.createElement('div');
+                    postFamily.textContent = `Family: ${post.family}`;
 
-                const postText = document.createElement('div');
-                postText.textContent = post.text;
+                    const postText = document.createElement('div');
+                    postText.textContent = post.text;
 
-                postDiv.appendChild(postFamily);
-                postDiv.appendChild(postText);
+                    postDiv.appendChild(postFamily);
+                    postDiv.appendChild(postText);
 
-                if (post.media && post.media.length > 0) {
-                    post.media.forEach(mediaUrl => {
-                        const mediaElement = document.createElement('img');
-                        mediaElement.src = mediaUrl;
-                        postDiv.appendChild(mediaElement);
-                    });
-                }
+                    if (post.media && post.media.length > 0) {
+                        post.media.forEach(mediaUrl => {
+                            const mediaElement = document.createElement('img');
+                            mediaElement.src = mediaUrl;
+                            postDiv.appendChild(mediaElement);
+                        });
+                    }
 
-                newsFeedDiv.appendChild(postDiv);
+                    newsFeedDiv.appendChild(postDiv);
+                });
             });
         }
 
-        async function loadSubscriptions() {
-            const settings = await fetchSettings();
+        function loadSubscriptions() {
+            const subscriptions = JSON.parse(localStorage.getItem('subscriptions')) || [];
             const subscriptionList = document.getElementById('subscriptionList');
             subscriptionList.innerHTML = '';
 
-            if (settings.subscriptions) {
-                settings.subscriptions.forEach(subscription => {
-                    const listItem = document.createElement('li');
-                    listItem.textContent = subscription;
-                    subscriptionList.appendChild(listItem);
-                });
-            }
+            subscriptions.forEach(subscription => {
+                const listItem = document.createElement('li');
+                listItem.textContent = subscription;
+                subscriptionList.appendChild(listItem);
+            });
         }
 
-        window.onload = function() {
+        window.onload = function () {
             loadNews();
             loadSubscriptions();
         }
     </script>
 </body>
 </html>
-
