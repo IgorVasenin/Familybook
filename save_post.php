@@ -25,8 +25,8 @@ $post = [
 
 // Обработка загруженных медиа-файлов
 if (isset($_FILES['media'])) {
-    foreach ($_FILES['media']['tmp_name'] as $index => $tmpName) {
-        $fileName = basename($_FILES['media']['name'][$index]);
+    foreach ($_FILES['media']['tmp_name'] as $home => $tmpName) {
+        $fileName = basename($_FILES['media']['name'][$home]);
         $targetFile = $uploadsDir . time() . '_' . $fileName;
         
         if (move_uploaded_file($tmpName, $targetFile)) {
