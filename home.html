@@ -110,7 +110,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.8.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.8.1/firebase-storage.js"></script>
 
-    <script>
+     <script>
         // Firebase configuration
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
@@ -132,29 +132,32 @@
             const postMedia = document.getElementById('postMedia').files;
             const familySurname = localStorage.getItem('familySurname') || 'My family';
 
-            let mediaUrls = [];
-            if (postMedia.length > 0) {
-                for (let i = 0; i < postMedia.length; i++) {
-                    const file = postMedia[i];
-                    const storageRef = storage.ref('posts/' + file.name);
-                    const uploadTask = storageRef.put(file);
-
-                    uploadTask.on('state_changed', (snapshot) => {
-                        // Progress of upload can be handled here if needed
-                    }, (error) => {
-                        console.error('Error uploading file:', error);
-                    }, () => {
-                        uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-                            mediaUrls.push(downloadURL);
-                            if (mediaUrls.length === postMedia.length) {
-                                savePostToDB(postText, mediaUrls, familySurname);
-                            }
-                        });
-                    });
-                }
-            } else {
-                savePostToDB(postText, mediaUrls, familySurname);
+            if (!postText && postMedia.length === 0) {
+                alert("Please enter some text or select a media file.");
+                return;
             }
+
+            let mediaUrls = [];
+            let uploadPromises = [];
+
+            for (let i = 0; i < postMedia.length; i++) {
+                const file = postMedia[i];
+                const storageRef = storage.ref('posts/' + Date.now() + '_' + file.name);
+                const uploadTask = storageRef.put(file);
+
+                uploadPromises.push(new Promise((resolve, reject) => {
+                    uploadTask.on('state_changed', null, reject, () => {
+                        uploadTask.snapshot.ref.getDownloadURL().then(resolve);
+                    });
+                }));
+            }
+
+            Promise.all(uploadPromises).then(urls => {
+                mediaUrls = urls;
+                savePostToDB(postText, mediaUrls, familySurname);
+            }).catch(error => {
+                console.error('Error uploading file:', error);
+            });
         }
 
         function savePostToDB(text, mediaUrls, family) {
@@ -166,6 +169,8 @@
             };
 
             db.ref('posts').push(post).then(() => {
+                document.getElementById('postText').value = '';
+                document.getElementById('postMedia').value = '';
                 loadNews();
             }).catch((error) => {
                 console.error('Error saving post to database:', error);
@@ -225,4 +230,3 @@
     </script>
 </body>
 </html>
-
