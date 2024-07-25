@@ -28,6 +28,7 @@
             max-width: 1200px;
             padding: 20px;
             box-sizing: border-box;
+            flex-direction: column;
         }
         .subscriptions {
             flex: 1;
@@ -81,6 +82,17 @@
         .my-family a:hover {
             text-decoration: underline;
         }
+        .export-button {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #00796b;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .export-button:hover {
+            background-color: #004d40;
+        }
     </style>
 </head>
 <body>
@@ -105,110 +117,76 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.8.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.8.1/firebase-database.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.8.1/firebase-storage.js"></script>
-
-     <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            databaseURL: "YOUR_DATABASE_URL",
-            projectId: "hranenie-dannyh-in-famolybook",
-            storageBucket: "gs://hranenie-dannyh-in-famolybook.appspot.com",
-            messagingSenderId: "630994926475",
-            appId: "1:630994926475:web:c8e4c0f77c6996175a0d8e"
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const storage = firebase.storage();
-
+    <script>
         function publishPost() {
             const postText = document.getElementById('postText').value;
             const postMedia = document.getElementById('postMedia').files;
-            const familySurname = localStorage.getItem('familySurname') || 'My family';
 
             if (!postText && postMedia.length === 0) {
                 alert("Please enter some text or select a media file.");
                 return;
             }
 
-            let mediaUrls = [];
-            let uploadPromises = [];
+            let formData = new FormData();
+            formData.append('text', postText);
 
             for (let i = 0; i < postMedia.length; i++) {
-                const file = postMedia[i];
-                const storageRef = storage.ref('posts/' + Date.now() + '_' + file.name);
-                const uploadTask = storageRef.put(file);
-
-                uploadPromises.push(new Promise((resolve, reject) => {
-                    uploadTask.on('state_changed', null, reject, () => {
-                        uploadTask.snapshot.ref.getDownloadURL().then(resolve);
-                    });
-                }));
+                formData.append('media[]', postMedia[i]);
             }
 
-            Promise.all(uploadPromises).then(urls => {
-                mediaUrls = urls;
-                savePostToDB(postText, mediaUrls, familySurname);
-            }).catch(error => {
-                console.error('Error uploading file:', error);
-            });
-        }
-
-        function savePostToDB(text, mediaUrls, family) {
-            const post = {
-                text: text,
-                family: family,
-                timestamp: Date.now(),
-                media: mediaUrls
-            };
-
-            db.ref('posts').push(post).then(() => {
-                document.getElementById('postText').value = '';
-                document.getElementById('postMedia').value = '';
-                loadNews();
-            }).catch((error) => {
-                console.error('Error saving post to database:', error);
+            fetch('save_post.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('postText').value = '';
+                    document.getElementById('postMedia').value = '';
+                    loadNews();
+                } else {
+                    alert('Error saving post.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
             });
         }
 
         function loadNews() {
-            const newsFeedDiv = document.getElementById('newsFeed');
-            newsFeedDiv.innerHTML = '';
+            fetch('load_posts.php')
+                .then(response => response.json())
+                .then(posts => {
+                    const newsFeedDiv = document.getElementById('newsFeed');
+                    newsFeedDiv.innerHTML = '';
 
-            db.ref('posts').orderByChild('timestamp').on('value', (snapshot) => {
-                newsFeedDiv.innerHTML = '';
+                    posts.forEach(post => {
+                        const postDiv = document.createElement('div');
+                        postDiv.className = 'post';
 
-                snapshot.forEach((childSnapshot) => {
-                    const post = childSnapshot.val();
-                    const postDiv = document.createElement('div');
-                    postDiv.className = 'post';
+                        const postFamily = document.createElement('div');
+                        postFamily.textContent = `Family: ${post.family}`;
 
-                    const postFamily = document.createElement('div');
-                    postFamily.textContent = `Family: ${post.family}`;
+                        const postText = document.createElement('div');
+                        postText.textContent = post.text;
 
-                    const postText = document.createElement('div');
-                    postText.textContent = post.text;
+                        postDiv.appendChild(postFamily);
+                        postDiv.appendChild(postText);
 
-                    postDiv.appendChild(postFamily);
-                    postDiv.appendChild(postText);
+                        if (post.media && post.media.length > 0) {
+                            post.media.forEach(mediaUrl => {
+                                const mediaElement = document.createElement('img');
+                                mediaElement.src = mediaUrl;
+                                postDiv.appendChild(mediaElement);
+                            });
+                        }
 
-                    if (post.media && post.media.length > 0) {
-                        post.media.forEach(mediaUrl => {
-                            const mediaElement = document.createElement('img');
-                            mediaElement.src = mediaUrl;
-                            postDiv.appendChild(mediaElement);
-                        });
-                    }
-
-                    newsFeedDiv.appendChild(postDiv);
+                        newsFeedDiv.appendChild(postDiv);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
                 });
-            });
         }
 
         function loadSubscriptions() {
@@ -230,3 +208,4 @@
     </script>
 </body>
 </html>
+
