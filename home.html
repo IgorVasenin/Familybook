@@ -4,165 +4,87 @@
     <meta charset="UTF-8">
     <title>Familybook Home</title>
     <style>
-        /* ваш CSS код */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e0f7fa;
+            color: #004d40;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            width: 50%;
+            margin: 20px auto;
+        }
+        .post-form {
+            margin-bottom: 20px;
+        }
+        .post {
+            border: 1px solid #004d40;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #ffffff;
+        }
+        .media {
+            max-width: 100%;
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Familybook</h1>
+    <div class="container">
+        <div class="post-form">
+            <textarea id="postText" placeholder="Write your post..."></textarea><br>
+            <input type="file" id="mediaInput" multiple><br>
+            <button onclick="publishPost()">Publish</button>
+        </div>
+        <div id="postsContainer"></div>
     </div>
-    <div class="main-content">
-        <div class="subscriptions">
-            <h2>We subscriptions</h2>
-            <ul id="subscriptionList"></ul>
-        </div>
-        <div class="news">
-            <div class="publish">
-                <textarea id="postText" rows="4" placeholder="Write something..."></textarea>
-                <input type="file" id="postMedia" multiple />
-                <button onclick="publishPost()">Publish</button>
-            </div>
-            <div id="newsFeed"></div>
-        </div>
-        <div class="my-family">
-            <a href="family.html">My family</a>
-        </div>
-    </div>
-
     <script>
-        const GITHUB_TOKEN = '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';
-        const REPO_OWNER = 'Igor Vasenin';
-        const REPO_NAME = 'Familybook';
+        const SERVER_URL = 'http://localhost:3000/api/posts';
 
         async function publishPost() {
             const postText = document.getElementById('postText').value;
-            const postMedia = document.getElementById('postMedia').files;
+            const mediaInput = document.getElementById('mediaInput');
+            const files = mediaInput.files;
 
-            if (!postText && postMedia.length === 0) {
-                alert("Please enter some text or select a media file.");
-                return;
+            const formData = new FormData();
+            formData.append('text', postText);
+            formData.append('family', 'MyFamily');
+            for (let i = 0; i < files.length; i++) {
+                formData.append('media', files[i]);
             }
 
-            let mediaUrls = [];
-
-            for (let i = 0; i < postMedia.length; i++) {
-                const file = postMedia[i];
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = function () {
-                    mediaUrls.push(reader.result);
-                    if (mediaUrls.length === postMedia.length) {
-                        savePostToGitHub(postText, mediaUrls);
-                    }
-                };
-            }
-
-            if (postMedia.length === 0) {
-                savePostToGitHub(postText, mediaUrls);
-            }
-        }
-
-        async function savePostToGitHub(text, mediaUrls) {
-            const post = {
-                text: text,
-                family: 'My family',
-                timestamp: Date.now(),
-                media: mediaUrls
-            };
-
-            let posts = await loadPostsFromGitHub();
-            posts.push(post);
-
-            const content = btoa(unescape(encodeURIComponent(JSON.stringify(posts, null, 2))));
-            const sha = await getFileSha('posts.json');
-
-            const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/posts.json`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `token ${GITHUB_TOKEN}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    message: 'New post',
-                    content: content,
-                    sha: sha
-                })
+            const response = await fetch(SERVER_URL, {
+                method: 'POST',
+                body: formData
             });
 
-            if (response.ok) {
-                document.getElementById('postText').value = '';
-                document.getElementById('postMedia').value = '';
-                loadNews();
-            } else {
-                console.error('Error saving post to GitHub:', await response.json());
-            }
+            const result = await response.json();
+            addPostToUI(result);
         }
 
-        async function loadPostsFromGitHub() {
-            const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/posts.json`, {
-                headers: {
-                    'Authorization': `token ${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}`
-                }
+        function addPostToUI(post) {
+            const postElement = document.createElement('div');
+            postElement.className = 'post';
+            postElement.innerHTML = `<p>${post.text}</p>`;
+            post.media.forEach(mediaFilename => {
+                const mediaElement = document.createElement('img');
+                mediaElement.src = `uploads/${mediaFilename}`;
+                mediaElement.className = 'media';
+                postElement.appendChild(mediaElement);
             });
-
-            if (response.ok) {
-                const file = await response.json();
-                const content = atob(file.content);
-                return JSON.parse(content);
-            } else {
-                return [];
-            }
+            document.getElementById('postsContainer').appendChild(postElement);
         }
 
-        async function getFileSha(path) {
-            const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${path}`, {
-                headers: {
-                    'Authorization': `token ${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}`
-                }
-            });
-
-            if (response.ok) {
-                const file = await response.json();
-                return file.sha;
-            } else {
-                return null;
-            }
+        async function loadPosts() {
+            const response = await fetch(SERVER_URL);
+            const posts = await response.json();
+            posts.forEach(post => addPostToUI(post));
         }
 
-        async function loadNews() {
-            const newsFeedDiv = document.getElementById('newsFeed');
-            newsFeedDiv.innerHTML = '';
-
-            const posts = await loadPostsFromGitHub();
-
-            posts.forEach(post => {
-                const postDiv = document.createElement('div');
-                postDiv.className = 'post';
-
-                const postFamily = document.createElement('div');
-                postFamily.textContent = `Family: ${post.family}`;
-
-                const postText = document.createElement('div');
-                postText.textContent = post.text;
-
-                postDiv.appendChild(postFamily);
-                postDiv.appendChild(postText);
-
-                if (post.media && post.media.length > 0) {
-                    post.media.forEach(mediaUrl => {
-                        const mediaElement = document.createElement('img');
-                        mediaElement.src = mediaUrl;
-                        postDiv.appendChild(mediaElement);
-                    });
-                }
-
-                newsFeedDiv.appendChild(postDiv);
-            });
-        }
-
-        window.onload = function () {
-            loadNews();
-        }
+        document.addEventListener('DOMContentLoaded', loadPosts);
     </script>
 </body>
 </html>
