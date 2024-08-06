@@ -39,68 +39,10 @@
             <input type="file" id="mediaInput" multiple><br>
             <button onclick="publishPost()">Publish</button>
         </div>
-        <div id="postsContainer"></div>
+        <div id="postsContainer">
+            <!-- Здесь будут добавляться посты -->
+        </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-    <script>
-        const supabaseUrl = 'https://ergobynuypjpyptlpsny.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVyZ29ieW51eXBqcHlwdGxwc255Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjI5MzI0ODAsImV4cCI6MjAzODUwODQ4MH0.FvLX9JcX4bP9bI4yH_PT-Q_1EH1kSgeoYOvZ00N4je4';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-        async function publishPost() {
-            const postText = document.getElementById('postText').value;
-            const mediaInput = document.getElementById('mediaInput');
-            const files = mediaInput.files;
-            const mediaUrls = [];
-
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                const { data, error } = await supabase.storage.from('uploads').upload(`public/${file.name}`, file);
-                if (error) {
-                    console.error('Error uploading file:', error);
-                    return;
-                }
-                mediaUrls.push(data.Key);
-            }
-
-            const { data, error } = await supabase
-                .from('posts')
-                .insert([{ text: postText, family: 'MyFamily', media: mediaUrls }]);
-
-            if (error) {
-                console.error('Error adding post:', error);
-            } else {
-                console.log('Post added:', data);
-                addPostToUI(data[0]);
-            }
-        }
-
-        function addPostToUI(post) {
-            const postElement = document.createElement('div');
-            postElement.className = 'post';
-            postElement.innerHTML = `<p>${post.text}</p>`;
-            post.media.forEach(mediaFilename => {
-                const mediaElement = document.createElement('img');
-                mediaElement.src = `https://your-supabase-url.supabase.co/storage/v1/object/public/uploads/${mediaFilename}`;
-                mediaElement.className = 'media';
-                postElement.appendChild(mediaElement);
-            });
-            document.getElementById('postsContainer').appendChild(postElement);
-        }
-
-        async function loadPosts() {
-            const { data, error } = await supabase
-                .from('posts')
-                .select('*');
-
-            if (error) {
-                console.error('Failed to load posts:', error);
-            } else {
-                data.forEach(post => addPostToUI(post));
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', loadPosts);
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
