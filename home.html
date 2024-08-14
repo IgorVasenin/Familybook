@@ -3,110 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Familybook</title>
-    <!-- Добавьте сюда ваши стили и мета-теги -->
+    <title>Publish Post</title>
+    <script>
+        async function publishPost() {
+            const postContent = document.getElementById('postContent').value;
+
+            const response = await fetch('https://api.airtable.com/v0/YourAppID/YourTableName', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer your_api_key',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    "fields": {
+                        "Content": postContent
+                    }
+                })
+            });
+
+            if (response.ok) {
+                alert('Post published!');
+            } else {
+                alert('Failed to publish post.');
+            }
+        }
+    </script>
 </head>
 <body>
-    <div id="content">
-        <h1>Posts from all family in this</h1>
-        <div id="news">
-            <!-- Здесь будут отображаться посты -->
-        </div>
-        <div id="post-form">
-            <textarea id="post-content" placeholder="What's on your mind?"></textarea>
-            <input type="file" id="post-media" accept="image/*,video/*">
-            <button onclick="publishPost()">Publish</button>
-        </div>
-    </div>
-
-    <!-- Firebase скрипты -->
-    <script type="module">
-      // Import the functions you need from the SDKs you need
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-      import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";
-      import { getDatabase, ref, set, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
-
-      // Your web app's Firebase configuration
-      const firebaseConfig = {
-        apiKey: "AIzaSyAbmS1GFzHo7gEcDa0JivJq6yf0KpoaJc8",
-        authDomain: "familybook-b0bdc.firebaseapp.com",
-        projectId: "familybook-b0bdc",
-        storageBucket: "familybook-b0bdc.appspot.com",
-        messagingSenderId: "160260114925",
-        appId: "1:160260114925:web:dde6754303642c3ab5bfe4",
-        measurementId: "G-HJ0ZRVST29"
-      };
-
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
-      const analytics = getAnalytics(app);
-      const database = getDatabase(app);
-
-      // Функция для публикации поста
-      function publishPost() {
-        const content = document.getElementById('post-content').value;
-        const mediaFile = document.getElementById('post-media').files[0];
-
-        if (!content && !mediaFile) {
-          alert('Please enter content or select a media file.');
-          return;
-        }
-
-        const postsRef = ref(database, 'posts');
-        const newPostRef = push(postsRef);
-
-        // Загружаем медиа и публикуем пост
-        if (mediaFile) {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-            const mediaUrl = e.target.result;
-            set(newPostRef, {
-              familyName: "Your Family Name", // Это можно заменить динамически
-              content: content,
-              mediaUrl: mediaUrl,
-              timestamp: Date.now()
-            }).then(() => {
-              alert('Post published successfully!');
-            });
-          };
-          reader.readAsDataURL(mediaFile);
-        } else {
-          set(newPostRef, {
-            familyName: "Your Family Name", // Это можно заменить динамически
-            content: content,
-            mediaUrl: null,
-            timestamp: Date.now()
-          }).then(() => {
-            alert('Post published successfully!');
-          });
-        }
-      }
-
-      // Функция для загрузки и отображения постов
-      function loadPosts() {
-        const postsRef = ref(database, 'posts');
-        onValue(postsRef, (snapshot) => {
-          const postsContainer = document.getElementById('news');
-          postsContainer.innerHTML = "";
-
-          snapshot.forEach((childSnapshot) => {
-            const post = childSnapshot.val();
-            const postElement = document.createElement('div');
-            postElement.innerHTML = `
-              <h3>${post.familyName}</h3>
-              <p>${post.content}</p>
-              ${post.mediaUrl ? `<img src="${post.mediaUrl}" alt="media" style="max-width: 300px;">` : ''}
-              <small>${new Date(post.timestamp).toLocaleString()}</small>
-            `;
-            postsContainer.appendChild(postElement);
-          });
-        });
-      }
-
-      // Загружаем посты при загрузке страницы
-      loadPosts();
-
-    </script>
+    <h1>Publish a New Post</h1>
+    <textarea id="postContent" rows="4" cols="50" placeholder="Write your post here..."></textarea><br>
+    <button onclick="publishPost()">Publish</button>
 </body>
 </html>
-
