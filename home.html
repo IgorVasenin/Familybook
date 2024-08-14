@@ -3,367 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Familybook - Home</title>
+    <title>Семейная книга</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
+            background-color: #f4f4f4;
             margin: 0;
             padding: 0;
         }
-
-        header {
-            background-color: #0073e6;
+        .header {
+            background-color: #007bff;
             color: white;
-            padding: 10px 20px;
             text-align: center;
+            padding: 10px 0;
         }
-
-        #main-container {
+        .container {
             display: flex;
             justify-content: space-between;
-            padding: 20px;
+            margin: 20px;
         }
-
-        #left-column, #middle-column, #right-column {
+        .left, .right {
+            width: 25%;
             background-color: white;
             padding: 15px;
-            border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-
-        #left-column {
-            width: 20%;
+        .center {
+            width: 50%;
+            background-color: white;
+            padding: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-
-        #middle-column {
-            width: 55%;
+        .center h2 {
+            text-align: center;
         }
-
-        #right-column {
-            width: 20%;
+        .post-form {
+            margin-bottom: 20px;
         }
-
-        h2 {
-            color: #0073e6;
-        }
-
-        #postForm {
-            display: flex;
-            flex-direction: column;
-        }
-
-        #postForm input, #postForm textarea, #postForm button {
-            margin-bottom: 10px;
+        .post-form input, .post-form textarea {
+            width: 100%;
             padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-
-        #postForm button {
-            background-color: #0073e6;
-            color: white;
-            cursor: pointer;
-        }
-
-        #news {
-            margin-top: 20px;
-        }
-
-        .post {
-            background-color: #e9f3ff;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-        }
-
-        .post h3 {
-            margin: 0;
-            color: #333;
-        }
-
-        .post p {
             margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
         }
-
-        .post time {
-            font-size: 0.8em;
-            color: #666;
+        .post-form button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            width: 100%;
+        }
+        .post-form button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Familybook</h1>
-    </header>
 
-    <div id="main-container">
-        <!-- Left Column: We Subscriptions -->
-        <div id="left-column">
-            <h2>We Subscriptions</h2>
-            <p>Family 1</p>
-            <p>Family 2</p>
-            <!-- Добавьте больше подписок по мере необходимости -->
+    <div class="header">
+        <h1>Семейная книга</h1>
+    </div>
+
+    <div class="container">
+        <div class="left">
+            <h3>Мы Подписки</h3>
+            <ul id="subscriptionsList"></ul>
         </div>
 
-        <!-- Middle Column: News -->
-        <div id="middle-column">
-            <h2>Posts from all family in this</h2>
-            <form id="postForm">
-                <input type="text" id="familyName" placeholder="Family Name" required>
-                <textarea id="postContent" placeholder="Post Content" required></textarea>
-                <input type="text" id="mediaUrl" placeholder="Media URL">
-                <button type="button" onclick="publishPost()">Publish</button>
+        <div class="center">
+            <h2>Посты от всей семьи в этом</h2>
+            <form class="post-form" onsubmit="sendDataToGoogleSheet(event)">
+                <input type="text" id="familyName" placeholder="Фамилия" required>
+                <textarea id="postContent" placeholder="Опубликовать контент" required></textarea>
+                <input type="text" id="mediaUrl" placeholder="URL-адрес медиа" required>
+                <button type="submit">Публиковать</button>
             </form>
-
-            <div id="news">
-                <!-- Здесь будут отображаться опубликованные посты -->
-            </div>
         </div>
 
-        <!-- Right Column: My Family -->
-        <div id="right-column">
-            <h2>My Family</h2>
-            <p>Family Name</p>
-            <p>Family Member 1</p>
-            <p>Family Member 2</p>
-            <!-- Добавьте больше членов семьи по мере необходимости -->
+        <div class="right">
+            <h3>Моя семья</h3>
+            <ul id="familyMembersList"></ul>
         </div>
     </div>
 
     <script>
-        function publishPost() {
-            const familyName = document.getElementById('familyName').value;
-            const postContent = document.getElementById('postContent').value;
-            const mediaUrl = document.getElementById('mediaUrl').value;
+        // Пример данных для подписок и членов семьи
+        const subscriptions = ["Семья 1", "Семья 2"];
+        const familyMembers = ["Член семьи 1", "Член семьи 2"];
 
-            const scriptURL = 'https://script.google.com/macros/s/AKfycby2r7-gwe8qmbd0nOln3FUCLH3giGvJFlZ3ZizmS_Q/exec';
-            fetch(scriptURL, {
+        // Отображение подписок
+        const subscriptionsList = document.getElementById('subscriptionsList');
+        subscriptions.forEach(sub => {
+            let listItem = document.createElement('li');
+            listItem.textContent = sub;
+            subscriptionsList.appendChild(listItem);
+        });
+
+        // Отображение членов семьи
+        const familyMembersList = document.getElementById('familyMembersList');
+        familyMembers.forEach(member => {
+            let listItem = document.createElement('li');
+            listItem.textContent = member;
+            familyMembersList.appendChild(listItem);
+        });
+
+        function sendDataToGoogleSheet(event) {
+            event.preventDefault(); // Prevent the form from submitting the traditional way
+
+            const url = 'https://script.google.com/macros/s/AKfycby2r7-gwe8qmbd0nOln3FUCLH3giGvJFlZ3ZizmS_Q/exec';
+            const data = {
+                familyName: document.getElementById("familyName").value,
+                postContent: document.getElementById("postContent").value,
+                mediaUrl: document.getElementById("mediaUrl").value
+            };
+
+            fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `familyName=${encodeURIComponent(familyName)}&postContent=${encodeURIComponent(postContent)}&mediaUrl=${encodeURIComponent(mediaUrl)}`
+                mode: 'no-cors', // Disable CORS to allow interaction with Google Apps Script
+                cache: 'no-cache',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
             })
-            .then(response => response.text())
-            .then(data => {
-                alert(data);
-                addPostToFeed(familyName, postContent, mediaUrl);
+            .then(response => {
+                console.log("Post successfully sent to Google Sheets");
+                alert("Пост успешно опубликован!");
+                document.querySelector(".post-form").reset(); // Reset the form fields
             })
-            .catch(error => console.error('Error!', error.message));
-        }
-
-        function addPostToFeed(familyName, content, mediaUrl) {
-            const newsDiv = document.getElementById('news');
-
-            const postDiv = document.createElement('div');
-            postDiv.className = 'post';
-
-            const postTitle = document.createElement('h3');
-            postTitle.textContent = familyName;
-
-            const postContent = document.createElement('p');
-            postContent.textContent = content;
-
-            const postTime = document.createElement('time');
-            postTime.textContent = new Date().toLocaleString();
-
-            postDiv.appendChild(postTitle);
-            postDiv.appendChild(postContent);
-            postDiv.appendChild(postTime);
-
-            if (mediaUrl) {
-                const postMedia = document.createElement('img');
-                postMedia.src = mediaUrl;
-                postMedia.style.maxWidth = '100%';
-                postDiv.appendChild(postMedia);
-            }
-
-            newsDiv.insertBefore(postDiv, newsDiv.firstChild);
+            .catch(error => {
+                console.error("Error sending post:", error);
+                alert("Ошибка при отправке поста. Попробуйте еще раз.");
+            });
         }
     </script>
+
 </body>
 </html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Familybook - Home</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            margin: 0;
-            padding: 0;
-        }
-
-        header {
-            background-color: #0073e6;
-            color: white;
-            padding: 10px 20px;
-            text-align: center;
-        }
-
-        #main-container {
-            display: flex;
-            justify-content: space-between;
-            padding: 20px;
-        }
-
-        #left-column, #middle-column, #right-column {
-            background-color: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        #left-column {
-            width: 20%;
-        }
-
-        #middle-column {
-            width: 55%;
-        }
-
-        #right-column {
-            width: 20%;
-        }
-
-        h2 {
-            color: #0073e6;
-        }
-
-        #postForm {
-            display: flex;
-            flex-direction: column;
-        }
-
-        #postForm input, #postForm textarea, #postForm button {
-            margin-bottom: 10px;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-
-        #postForm button {
-            background-color: #0073e6;
-            color: white;
-            cursor: pointer;
-        }
-
-        #news {
-            margin-top: 20px;
-        }
-
-        .post {
-            background-color: #e9f3ff;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-        }
-
-        .post h3 {
-            margin: 0;
-            color: #333;
-        }
-
-        .post p {
-            margin: 5px 0;
-        }
-
-        .post time {
-            font-size: 0.8em;
-            color: #666;
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <h1>Familybook</h1>
-    </header>
-
-    <div id="main-container">
-        <!-- Left Column: We Subscriptions -->
-        <div id="left-column">
-            <h2>We Subscriptions</h2>
-            <p>Family 1</p>
-            <p>Family 2</p>
-            <!-- Добавьте больше подписок по мере необходимости -->
-        </div>
-
-        <!-- Middle Column: News -->
-        <div id="middle-column">
-            <h2>Posts from all families in this</h2>
-            <form id="postForm">
-                <input type="text" id="familyName" placeholder="Family Name" required>
-                <textarea id="postContent" placeholder="Post Content" required></textarea>
-                <input type="text" id="mediaUrl" placeholder="Media URL">
-                <button type="button" onclick="publishPost()">Publish</button>
-            </form>
-
-            <div id="news">
-                <!-- Здесь будут отображаться опубликованные посты -->
-            </div>
-        </div>
-
-        <!-- Right Column: My Family -->
-        <div id="right-column">
-            <h2>My Family</h2>
-            <p>Family Name</p>
-            <p>Family Member 1</p>
-            <p>Family Member 2</p>
-            <!-- Добавьте больше членов семьи по мере необходимости -->
-        </div>
-    </div>
-
-    <script>
-        function publishPost() {
-            const familyName = document.getElementById('familyName').value;
-            const postContent = document.getElementById('postContent').value;
-            const mediaUrl = document.getElementById('mediaUrl').value;
-
-            const scriptURL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
-            fetch(scriptURL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `familyName=${encodeURIComponent(familyName)}&postContent=${encodeURIComponent(postContent)}&mediaUrl=${encodeURIComponent(mediaUrl)}`
-            })
-            .then(response => response.text())
-            .then(data => {
-                alert(data);
-                addPostToFeed(familyName, postContent, mediaUrl);
-            })
-            .catch(error => console.error('Error!', error.message));
-        }
-
-        function addPostToFeed(familyName, content, mediaUrl) {
-            const newsDiv = document.getElementById('news');
-
-            const postDiv = document.createElement('div');
-            postDiv.className = 'post';
-
-            const postTitle = document.createElement('h3');
-            postTitle.textContent = familyName;
-
-            const postContent = document.createElement('p');
-            postContent.textContent = content;
-
-            const postTime = document.createElement('time');
-            postTime.textContent = new Date().toLocaleString();
-
-            postDiv.appendChild(postTitle);
-            postDiv.appendChild(postContent);
-            postDiv.appendChild(postTime);
-
-            if (mediaUrl) {
-                const postMedia = document.createElement('img');
-                postMedia.src = mediaUrl;
-                postMedia.style.maxWidth = '100%';
-                postDiv.appendChild(postMedia);
-            }
-
-            newsDiv.insertBefore(postDiv, newsDiv.firstChild);
-        }
-    </script>
-</body>
-</html>
-
